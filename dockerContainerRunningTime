@@ -1,5 +1,5 @@
 #! /bin/bash
-# Ex. >dockerContainerRunningTime.sh containerName
+# Ex. >sh dockerContainerRunningTime.sh containerName
 #
 # The script checks that the container is running
 # and if its running time is longer than N the script does something
