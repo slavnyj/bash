@@ -1,9 +1,10 @@
 #! /bin/bash
+# Ex. >dockerContainerRunningTime.sh containerName
 #
 # The script checks that the container is running
 # and if its running time is longer than N the script does something
 #
-
+#
 containerName=$1
 theDate=$(date +%s)
 started=$(docker inspect -f '{{ .State.StartedAt }}' $containerName)
