@@ -1,0 +1,20 @@
+#! /bin/bash
+#
+# The script checks that the container is running
+# and if its running time is longer than N the script does something
+#
+
+containerName=$1
+theDate=$(date +%s)
+started=$(docker inspect -f '{{ .State.StartedAt }}' $containerName)
+containerStatus=$(docker inspect -f '{{ .State.Status }}' $containerName)
+formatStarted=$(date -d $started +%s)
+
+if [ "$containerStatus" == "running" ]
+then
+  duration=$(( (theDate-formatStarted) / 3600 ))
+  if [ $duration > 0 ]
+  then
+    echo "Duration is" $duration "hours"
+  fi
+fi
