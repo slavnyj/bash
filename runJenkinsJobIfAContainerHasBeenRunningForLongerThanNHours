@@ -1,0 +1,72 @@
+#! /bin/bash
+
+### Checks whether the CONTAINER_NAME is running or not. If the container is running, it will know how long it has been running. 
+### If it works longer than RESTART_HOURS hours, then we run the JOB_NAME in Jenkins and send a message to Telegram
+
+JOB_NAME=Welcome
+RESTART_HOURS=24
+CONTAINER_NAME=2mca
+
+JENKINS_URL=https://darci.kk.com
+USER=ivanov
+API_TOKEN=1166e72c85da1711e5991866c4462436ea
+JOB_URL="${JENKINS_URL}/job/${JOB_NAME}"
+TELEGRAM_HOOK=http://mon-app1.kk.com:5050/callTelegram?eventName=2mca
+THE_DATE=$(date +%s)
+STARTED=$(docker inspect -f '{{ .State.StartedAt }}' $CONTAINER_NAME)
+CONTAINER_STATUS=$(docker inspect -f '{{ .State.Status }}' $CONTAINER_NAME)
+FORMAT_STARTED=$(date -d $STARTED +%s)
+
+
+# Here we ask for next build job number
+function getNextBuildNr(){
+  curl --silent ${JOB_URL}/api/json | grep -Po '"nextBuildNumber":\K\d+'
+}
+
+# this will request the Status of job
+function getBuildState(){
+  buildNr=$1
+  curl --silent ${JOB_URL}/${buildNr}/api/json | grep -Po '"result":\s*"\K\w+'
+}
+
+# this will wait for your Job state, by polling Jenkins every second
+function waitForJob() {
+  buildNr=$1
+  state=""
+
+  while [ "${state}" == "" ]
+  do
+     sleep 1
+     state=$(getBuildState ${buildNr})
+     # echo -n '.'
+  done
+
+  #echo -e "\n"
+}
+
+function send_message {
+  curl -s -X POST -H "Content-Type: application/json" -d '{"message":"'"$1"'"}' $TELEGRAM_HOOK
+}
+
+#Script Body
+
+if [ "$CONTAINER_STATUS" == "running" ]
+then
+  DURATION=$(( (THE_DATE-FORMAT_STARTED) / 3600 ))
+  DAYS=$(($((DURATION))/24))
+  HH=$(($((DURATION))-$(($((DAYS))*24))))
+  if [ $((DURATION)) -gt $((RESTART_HOURS)) ]
+  then
+    BUILD_NR=$(getNextBuildNr)
+    START_TIME=$(date +%T)
+    curl -X POST --user $USER:$API_TOKEN ${JOB_URL}/build
+    waitForJob ${BUILD_NR}
+    BUILD_STATE=$(getBuildState ${BUILD_NR})
+    END_TIME=$(date +%T)
+    MESSAGE="Перезапуск 2MCA\nJENKINS JOB: $JOB_NAME\n\n$START_TIME начат перезапуск 2MCA\n$END_TIME выполнен перезапуск 2MCA\n2MCA работал до перезапуска: $DAYS day $HH hours\n\nРезультат: $BUILD_STATE\n*** Перезапуск происходит, если 2MCA работает дольше $RESTART_HOURS часов"
+    send_message "$MESSAGE"
+    echo -e "$MESSAGE"
+  fi
+else
+  echo "ReDeploy не требуется. 2MCA работает $DAYS дней $HH часов."
+fi
