@@ -67,6 +67,5 @@ then
     send_message "$MESSAGE"
     echo -e "$MESSAGE"
   fi
-else
   echo "ReDeploy не требуется. 2MCA работает $DAYS дней $HH часов."
 fi
