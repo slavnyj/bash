@@ -59,7 +59,7 @@ then
   then
     BUILD_NR=$(getNextBuildNr)
     START_TIME=$(date +%T)
-    curl -X POST --user $USER:$API_TOKEN ${JOB_URL}/build
+    curl -X POST --user $USER:$API_TOKEN ${JOB_URL}/buildWithParameters?FAST_DEPLOY=False&HOST_LIMIT=null
     waitForJob ${BUILD_NR}
     BUILD_STATE=$(getBuildState ${BUILD_NR})
     END_TIME=$(date +%T)
