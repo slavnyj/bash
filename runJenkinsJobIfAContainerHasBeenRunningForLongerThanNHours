@@ -20,13 +20,13 @@ FORMAT_STARTED=$(date -d $STARTED +%s)
 
 # Here we ask for next build job number
 function getNextBuildNr(){
-  curl --silent ${JOB_URL}/api/json | grep -Po '"nextBuildNumber":\K\d+'
+  curl --silent --user $USER:$API_TOKEN ${JOB_URL}/api/json | grep -Po '"nextBuildNumber":\K\d+'
 }
 
 # this will request the Status of job
 function getBuildState(){
   buildNr=$1
-  curl --silent ${JOB_URL}/${buildNr}/api/json | grep -Po '"result":\s*"\K\w+'
+  curl --silent --user $USER:$API_TOKEN ${JOB_URL}/${buildNr}/api/json | grep -Po '"result":\s*"\K\w+'
 }
 
 # this will wait for your Job state, by polling Jenkins every second
